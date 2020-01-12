@@ -12,7 +12,8 @@ from time import sleep
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
 
-from zigi.util.util import Singleton, iso_format
+from custom import util
+from custom.util import Singleton
 
 q = None
 bulk_size = 10
@@ -133,7 +134,8 @@ class Logger:
             if level == "ERROR":
                 body['error'] = str(traceback.format_exc())
             body['message'] = message
-            body['date'] = iso_format(datetime.utcnow())
+            utcnow = datetime.utcnow()
+            body['date'] = util.iso_time_format(utcnow)
             body['level'] = level
             body['hostName'] = socket.gethostname()
             body['threadName'] = threading.currentThread().getName()
