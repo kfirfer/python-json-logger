@@ -77,13 +77,11 @@ class ElasticSearchLogger:
     log.debug(generic_custom_field="hello world")
     """
 
-    logger = None
     es_client = None
-    kwargs = None
     is_es_enabled = True
 
-    def __init__(self, **kwargs):
-        self.kwargs = kwargs
+    def __init__(self):
+
         if "ELASTICSEARCH_MONITOR_HOSTS" in os.environ:
             es_hosts = os.environ["ELASTICSEARCH_MONITOR_HOSTS"]
             try:

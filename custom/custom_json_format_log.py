@@ -41,7 +41,9 @@ class CustomJSONLog(logging.Formatter):
 
     def format(self, record):
         utcnow = datetime.utcnow()
+        formatted_date = util.iso_time_format(utcnow)
         json_log_object = {"type": "log",
+                           "date": formatted_date,
                            "logger": record.name,
                            "thread": record.threadName,
                            "level": record.levelname,
@@ -58,8 +60,6 @@ class CustomJSONLog(logging.Formatter):
 
         if record.exc_info or record.exc_text:
             json_log_object.update(self.get_exc_fields(record))
-
-        json_log_object['date'] = util.iso_time_format(utcnow)
 
         self.elastic_search_logger.external_logger(body=json_log_object)
 
