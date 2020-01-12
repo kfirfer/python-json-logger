@@ -1,11 +1,11 @@
 # This example shows how the logger can be set up to use a custom JSON format.
 import json
 import logging
+import os
 import traceback
 from datetime import datetime
 
 from custom import util
-
 
 JSON_SERIALIZER = lambda log: json.dumps(log, ensure_ascii=False)
 
@@ -15,15 +15,15 @@ def _sanitize_log_msg(record):
 
 
 class CustomJSONLog(logging.Formatter):
-    """
-    Formatter for web application log
-    """
     elastic_search_logger = None
+    f = None
 
     def __init__(self):
         super().__init__()
-        from custom.loggers import ElasticSearchLogger
-        self.elastic_search_logger = ElasticSearchLogger()
+        self.f = logging.Formatter('%(asctime)s - %(threadName)s - %(levelname)s - %(msg)s')
+        if "ELASTICSEARCH_MONITOR_HOSTS" in os.environ and os.environ["ELASTICSEARCH_MONITOR_HOSTS"] != "":
+            from custom.elasticsearch_shoveler import ElasticSearchLogger
+            self.elastic_search_logger = ElasticSearchLogger()
 
     def get_exc_fields(self, record):
         if record.exc_info:
@@ -46,8 +46,11 @@ class CustomJSONLog(logging.Formatter):
                            "thread": record.threadName,
                            "level": record.levelname,
                            "module": record.module,
+                           "caller": record.filename,
+                           "funcName": record.funcName,
                            "line_no": record.lineno,
-                           "message": _sanitize_log_msg(record)
+                           "message": _sanitize_log_msg(record),
+                           "pid": record.process
                            }
 
         if hasattr(record, 'props'):
@@ -58,15 +61,9 @@ class CustomJSONLog(logging.Formatter):
 
         json_log_object['date'] = util.iso_time_format(utcnow)
 
-        # for key, value in tags.items():
-        #     body[key] = value
-        #
-        # for key, value in self.kwargs.items():
-        #     body[key] = value
-        #
-        # for key, value in kwargs.items():
-        #     body[key] = value
-
         self.elastic_search_logger.external_logger(body=json_log_object)
 
-        return JSON_SERIALIZER(json_log_object)
+        if "JSON_LOG_CONSOLE" in os.environ and os.environ["JSON_LOG_CONSOLE"] == "1":
+            return JSON_SERIALIZER(json_log_object)
+        else:
+            return self.f.format(record)

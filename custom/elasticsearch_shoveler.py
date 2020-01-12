@@ -1,7 +1,5 @@
 import atexit
-import logging
 import os
-import socket
 import sys
 import threading
 import time
@@ -13,11 +11,10 @@ from time import sleep
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
 
-from custom import util
 from custom.util import Singleton
 
 q = None
-bulk_size = 1
+bulk_size = 10
 if "ELASTICSEARCH_MONITOR_HOSTS" in os.environ:
     queue_size = 10000
     if 'ELASTICSEARCH_MONITOR_QUEUE_SIZE' in os.environ:
@@ -33,6 +30,14 @@ if 'ELASTICSEARCH_MONITOR_TAGS' in os.environ:
     except:
         print("Error parse ELASTICSEARCH_MONITOR_TAGS", file=sys.stderr)
         tags = {"component": "general"}
+
+
+def index_log_to_elastic(body=None):
+    try:
+        if not q.full():
+            q.put(body)
+    except Exception as e:
+        traceback.format_exc()
 
 
 class ElasticSearchLogger:
@@ -95,14 +100,7 @@ class ElasticSearchLogger:
 
     def external_logger(self, body):
         if self.is_es_enabled:
-            self.index_log_to_elastic(body)
-
-    def index_log_to_elastic(self, body=None):
-        try:
-            if not q.full():
-                q.put(body)
-        except Exception as e:
-            traceback.format_exc()
+            index_log_to_elastic(body)
 
 
 class ElasticSearchMonitorLogger(threading.Thread, metaclass=Singleton):

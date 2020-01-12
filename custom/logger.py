@@ -1,26 +1,17 @@
+import logging
 import os
-import time
+import sys
 
 import custom
-import sys
-import logging
 from custom.custom_json_format_log import CustomJSONLog
-from custom.custom_plain_format_log import CustomPlainLog
 
 
 class Logger:
     logger = None
 
-    def __init__(self, s):
-        if s == "1":
-            formatter = logging.Formatter('%(asctime)s - %(threadName)s - %(levelname)s - %(message)s')
-            custom.init_non_web(custom_formatter=formatter)
-        elif s == "2":
-            custom.init_non_web(custom_formatter=CustomJSONLog)
-        else:
-            custom.init_non_web(custom_formatter=CustomPlainLog)
-
-        logger = logging.getLogger(s)
+    def __init__(self, log_name):
+        custom.init_non_web(custom_formatter=CustomJSONLog)
+        logger = logging.getLogger(log_name)
         logger.setLevel(logging.DEBUG)
         logger.addHandler(logging.StreamHandler(sys.stdout))
         self.logger = logger
@@ -54,5 +45,4 @@ def test_logger3():
 if __name__ == '__main__':
     # test_logger()
     test_logger2()
-    # time.sleep(5)
     # test_logger3()
