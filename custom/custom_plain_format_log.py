@@ -10,7 +10,7 @@ def extra(**kw):
     return {'extra': {'props': kw}}
 
 
-class CustomJSONLog(logging.Formatter):
+class CustomPlainLog(logging.Formatter):
     """
     Customized logger
     """

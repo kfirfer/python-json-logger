@@ -6,6 +6,7 @@ from datetime import datetime
 
 from custom import util
 
+
 JSON_SERIALIZER = lambda log: json.dumps(log, ensure_ascii=False)
 
 
@@ -17,6 +18,12 @@ class CustomJSONLog(logging.Formatter):
     """
     Formatter for web application log
     """
+    elastic_search_logger = None
+
+    def __init__(self):
+        super().__init__()
+        from custom.loggers import ElasticSearchLogger
+        self.elastic_search_logger = ElasticSearchLogger()
 
     def get_exc_fields(self, record):
         if record.exc_info:
@@ -35,14 +42,12 @@ class CustomJSONLog(logging.Formatter):
     def format(self, record):
         utcnow = datetime.utcnow()
         json_log_object = {"type": "log",
-                           "written_at": util.iso_time_format(utcnow),
-                           "written_ts": util.epoch_nano_second(utcnow),
                            "logger": record.name,
                            "thread": record.threadName,
                            "level": record.levelname,
                            "module": record.module,
                            "line_no": record.lineno,
-                           "msg": _sanitize_log_msg(record)
+                           "message": _sanitize_log_msg(record)
                            }
 
         if hasattr(record, 'props'):
@@ -50,5 +55,18 @@ class CustomJSONLog(logging.Formatter):
 
         if record.exc_info or record.exc_text:
             json_log_object.update(self.get_exc_fields(record))
+
+        json_log_object['date'] = util.iso_time_format(utcnow)
+
+        # for key, value in tags.items():
+        #     body[key] = value
+        #
+        # for key, value in self.kwargs.items():
+        #     body[key] = value
+        #
+        # for key, value in kwargs.items():
+        #     body[key] = value
+
+        self.elastic_search_logger.external_logger(body=json_log_object)
 
         return JSON_SERIALIZER(json_log_object)
