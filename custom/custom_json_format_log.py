@@ -7,7 +7,9 @@ from datetime import datetime
 
 from custom import util
 
-JSON_SERIALIZER = lambda log: json.dumps(log, ensure_ascii=False)
+
+def json_serializer(log):
+    return json.dumps(log, ensure_ascii=False)
 
 
 def _sanitize_log_msg(record):
@@ -20,7 +22,7 @@ class CustomJSONLog(logging.Formatter):
 
     def __init__(self):
         super().__init__()
-        self.f = logging.Formatter('%(asctime)s - %(threadName)s - %(levelname)s - %(msg)s')
+        self.f = logging.Formatter('%(asctime)s - %(levelname)s - %(msg)s')
         if "ELASTICSEARCH_MONITOR_HOSTS" in os.environ and os.environ["ELASTICSEARCH_MONITOR_HOSTS"] != "":
             from custom.elasticsearch_shoveler import ElasticSearchLogger
             self.elastic_search_logger = ElasticSearchLogger()
@@ -61,9 +63,10 @@ class CustomJSONLog(logging.Formatter):
         if record.exc_info or record.exc_text:
             json_log_object.update(self.get_exc_fields(record))
 
-        self.elastic_search_logger.external_logger(body=json_log_object)
+        if self.elastic_search_logger:
+            self.elastic_search_logger.external_logger(body=json_log_object)
 
         if "JSON_LOG_CONSOLE" in os.environ and os.environ["JSON_LOG_CONSOLE"] == "1":
-            return JSON_SERIALIZER(json_log_object)
+            return json_serializer(json_log_object)
         else:
             return self.f.format(record)

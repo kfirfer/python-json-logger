@@ -1,6 +1,7 @@
 # coding=utf-8
-import logging
 import inspect
+import logging
+
 from custom import util
 
 
